@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:bookroom/booking/booking.dart';
+import 'package:bookroom/app/booking.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
@@ -8,7 +8,10 @@ class RoomDetails extends StatefulWidget {
   final String buildingName;
   final Function(String, String) onStatusChanged; // Callback function
 
-  RoomDetails({required this.room, required this.buildingName, required this.onStatusChanged});
+  RoomDetails(
+      {required this.room,
+      required this.buildingName,
+      required this.onStatusChanged});
 
   @override
   _RoomDetailsState createState() => _RoomDetailsState();
@@ -23,29 +26,52 @@ class _RoomDetailsState extends State<RoomDetails> {
   void initState() {
     super.initState();
     status = widget.room['status'] ?? 'ว่าง';
-  
-    FirebaseFirestore.instance.collection("booking")
-      .where('roomName', isEqualTo: widget.room['name'])
-      .where('buildingName', isEqualTo: widget.buildingName)
-      .get()
-      .then((event) {
-        for (var doc in event.docs) {
-          final booking = doc.data();
-          booking["id"] = doc.id;
-          setState(() {
-            bookings.add(booking); // อ่านประวัติการจองจากฐานข้อมูล
-          });
-        }
+
+    FirebaseFirestore.instance
+        .collection("booking")
+        .where('roomName', isEqualTo: widget.room['name'])
+        .where('buildingName', isEqualTo: widget.buildingName)
+        .get()
+        .then((event) {
+      for (var doc in event.docs) {
+        final booking = doc.data();
+        booking["id"] = doc.id;
+        setState(() {
+          bookings.add(booking); // อ่านประวัติการจองจากฐานข้อมูล
+        });
       }
-    );
+    });
   }
 
-  void updateStatus(String newStatus) {
+  void updateStatus(String newStatus) async {
     setState(() {
       status = newStatus;
       widget.room['status'] = newStatus;
-      widget.onStatusChanged(widget.room['name']!, newStatus); // ส่งข้อมูลสถานะกลับไปที่ HomePage
+      widget.onStatusChanged(
+          widget.room['name']!, newStatus); // ส่งข้อมูลสถานะกลับไปที่ HomePage
     });
+
+    try {
+      // บันทึกสถานะห้องลงใน Collection `room_status`
+      await FirebaseFirestore.instance
+          .collection("room_status") // Collection สำหรับบันทึกสถานะห้อง
+          .doc(
+              "${widget.buildingName}_${widget.room['name']}") // ใช้ชื่ออาคาร+ห้องเป็น ID
+          .set(
+              {
+            "roomName": widget.room['name'],
+            "buildingName": widget.buildingName,
+            "status": newStatus,
+            "updatedAt": FieldValue.serverTimestamp(), // บันทึกเวลาอัปเดตล่าสุด
+          },
+              SetOptions(
+                  merge:
+                      true)); // ใช้ merge เพื่ออัปเดตข้อมูลเดิมแทนการเขียนทับทั้งหมด
+
+      print("บันทึกสถานะห้องเรียบร้อย: ${widget.room['name']} -> $newStatus");
+    } catch (e) {
+      print("เกิดข้อผิดพลาดในการบันทึกสถานะ: $e");
+    }
   }
 
   void bookRoom() {
@@ -79,7 +105,8 @@ class _RoomDetailsState extends State<RoomDetails> {
               },
               child: Text(
                 'ยืนยัน',
-                style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: Colors.orange, fontWeight: FontWeight.bold),
               ),
             ),
             TextButton(
@@ -98,23 +125,30 @@ class _RoomDetailsState extends State<RoomDetails> {
     final booking = bookings[index];
 
     print(booking);
-    
-    // QuerySnapshot querySnapshot = await FirebaseFirestore.instance.collection('booking')
-    //   .where('roomName', isEqualTo: booking['roomName'])
-    //   .where('buildingName', isEqualTo: booking['buildingName'])
-    //   .where('endDate', isEqualTo: booking['endDate'])
-    //   .where('endTime', isEqualTo: booking['endTime'])
-    //   .where('startDate', isEqualTo: booking['startDate'])
-    //   .where('startTime', isEqualTo: booking['startTime'])
-    //   .get();
 
-    // for (var doc in querySnapshot.docs) {
-    //   await FirebaseFirestore.instance.collection('booking').doc(doc.id).delete();
-    //   print('Deleted document with ID: ${doc.id}');
-    // }
+    QuerySnapshot querySnapshot = await FirebaseFirestore.instance
+        .collection('booking')
+        .where('roomName', isEqualTo: booking['roomName'])
+        .where('buildingName', isEqualTo: booking['buildingName'])
+        .where('endDate', isEqualTo: booking['endDate'])
+        .where('endTime', isEqualTo: booking['endTime'])
+        .where('startDate', isEqualTo: booking['startDate'])
+        .where('startTime', isEqualTo: booking['startTime'])
+        .get();
 
-    await FirebaseFirestore.instance.collection('booking').doc(booking['id']).delete();
-    
+    for (var doc in querySnapshot.docs) {
+      await FirebaseFirestore.instance
+          .collection('booking')
+          .doc(doc.id)
+          .delete();
+      print('Deleted document with ID: ${doc.id}');
+    }
+
+    await FirebaseFirestore.instance
+        .collection('booking')
+        .doc(booking['id'])
+        .delete();
+
     setState(() {
       bookings.removeAt(index); // ลบการจองตามดัชนี
     });
@@ -151,7 +185,9 @@ class _RoomDetailsState extends State<RoomDetails> {
                 ElevatedButton(
                   onPressed: () => updateStatus('ไม่ว่าง'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: status == 'ใช้งานอยู่' ? Colors.green : Colors.blueGrey[50],
+                    backgroundColor: status == 'ใช้งานอยู่'
+                        ? Colors.green
+                        : Colors.blueGrey[50],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -161,7 +197,8 @@ class _RoomDetailsState extends State<RoomDetails> {
                   child: Text(
                     'ใช้งานอยู่',
                     style: TextStyle(
-                      color: status == 'ใช้งานอยู่' ? Colors.white : Colors.green,
+                      color:
+                          status == 'ใช้งานอยู่' ? Colors.white : Colors.green,
                       fontSize: 16,
                     ),
                   ),
@@ -169,7 +206,9 @@ class _RoomDetailsState extends State<RoomDetails> {
                 ElevatedButton(
                   onPressed: () => updateStatus('ว่าง'),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: status == 'เลิกใช้งาน' ? Colors.red : Colors.blueGrey[50],
+                    backgroundColor: status == 'เลิกใช้งาน'
+                        ? Colors.red
+                        : Colors.blueGrey[50],
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),

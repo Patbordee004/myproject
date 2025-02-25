@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:bookroom/roomdt/roomdt.dart';
-import 'package:bookroom/schedule/schedule.dart';
+import 'package:bookroom/app/roomdt.dart';
+import 'package:bookroom/app/schedule.dart';
+import 'package:bookroom/app/booked.dart';
 import 'package:firebase_core/firebase_core.dart';
 import '../firebase_options.dart';
 
@@ -45,10 +46,10 @@ class _HomePageState extends State<HomePage> {
     {
       'buildingName': 'อาคาร 26',
       'rooms': [
-        {'name': 'ห้อง 26104', 'status': ''},
-        {'name': 'ห้อง 26105', 'status': ''},
-        {'name': 'ห้อง 26108', 'status': ''},
-        {'name': 'ห้อง 26202', 'status': ''},
+        {'name': 'ห้องปฎิบัติการ 26104', 'status': ''},
+        {'name': 'ห้องปฎิบัติการ 26108', 'status': ''},
+        {'name': 'ห้องปฎิบัติการ 26202', 'status': ''},
+        {'name': 'ห้องปฎิบัติการ 26301', 'status': ''},
       ],
     },
   ];
@@ -74,6 +75,54 @@ class _HomePageState extends State<HomePage> {
         centerTitle: true,
         backgroundColor: Colors.indigoAccent,
         elevation: 4,
+      ),
+      drawer: Drawer(
+        child: ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            DrawerHeader(
+              decoration: BoxDecoration(
+                color: Colors.indigoAccent,
+              ),
+              child: Text(
+                'เมนู',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                ),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.schedule),
+              title: Text('ดูตารางเรียน'),
+              onTap: () {
+                final allRooms = [
+                  ...buildings[0]['rooms'],
+                  ...buildings[1]['rooms'],
+                ];
+                List<Map<String, dynamic>> allRoomsTyped = List<Map<String, dynamic>>.from(allRooms);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SchedulePage(rooms: allRoomsTyped),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.book_online),
+              title: Text('การจองของคุณ'),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookedPage(),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
       body: ListView.builder(
         padding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
@@ -153,28 +202,6 @@ class _HomePageState extends State<HomePage> {
           );
         },
       ),
-      floatingActionButton: FloatingActionButton.extended(
-  onPressed: () {
-    final allRooms = [
-      ...buildings[0]['rooms'], // ห้องจากอาคาร 22
-      ...buildings[1]['rooms'], // ห้องจากอาคาร 26
-    ];
-
-    // แปลงประเภทให้เป็น List<Map<String, dynamic>> ก่อนส่ง
-    List<Map<String, dynamic>> allRoomsTyped = List<Map<String, dynamic>>.from(allRooms);
-
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => SchedulePage(rooms: allRoomsTyped),
-      ),
-    );
-  },
-  label: Text('ดูตารางเรียน'),
-  icon: Icon(Icons.schedule),
-  backgroundColor: const Color.fromARGB(255, 128, 146, 252),
-),
-
     );
   }
 }

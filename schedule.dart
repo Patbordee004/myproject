@@ -9,10 +9,10 @@ class SchedulePage extends StatelessWidget {
     'ห้อง 2232': [{'image': 'images/2232.jpg'}],
     'ห้อง 2233': [{'image': 'images/2233.jpg'}],
     'ห้อง 2234': [{'image': 'images/2234.jpg'}],
-    'ห้อง 26104': [{'image': 'images/26104.jpg'}],
-    'ห้อง 26105': [{'image': 'images/26105.jpg'}],
-    'ห้อง 26108': [{'image': 'images/26108.jpg'}],
-    'ห้อง 26202': [{'image': 'images/26202.jpg'}],
+    'ห้องปฎิบัติการ 26104': [{'image': 'images/26104.jpg'}],
+    'ห้องปฎิบัติการ 26108': [{'image': 'images/26108.jpg'}],
+    'ห้องปฎิบัติการ 26202': [{'image': 'images/26202.jpg'}],
+    'ห้องปฎิบัติการ 26301': [{'image': 'images/26301.jpg'}],
   };
 
   SchedulePage({required this.rooms});
@@ -44,7 +44,7 @@ class SchedulePage extends StatelessWidget {
             children: [
               ExpansionTile(
                 title: Text(
-                  'ตารางเรียนของ $roomName',
+                  'ตารางเรียน $roomName',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 children: [
